@@ -1,0 +1,19 @@
+# Just updating the bulk_add_hosts method
+@app.route('/api/hosts/bulk', methods=['POST'])
+@jwt_required()
+def add_hosts_bulk():
+    """Add multiple hosts in bulk"""
+    current_user = get_jwt_identity()
+    environment = current_user.get('environment', 'non-production')
+    
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON in request"}), 400
+    
+    bulk_data = request.json.get('hosts', [])
+    
+    # Log the incoming data for debugging
+    logger.info(f"Received bulk hosts data: {bulk_data}")
+    
+    # Process bulk data without validation
+    hosts = file_storage.bulk_add_hosts(bulk_data, environment)
+    return jsonify(hosts=hosts), 201

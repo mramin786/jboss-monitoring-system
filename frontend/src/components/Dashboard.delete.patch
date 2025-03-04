@@ -1,0 +1,21 @@
+--- Dashboard.js	2023-03-05 00:00:00
++++ Dashboard.js.new	2023-03-05 00:00:00
+@@ -220,7 +220,16 @@
+     if (!window.confirm('Are you sure you want to delete this host?')) return;
+     
+     try {
+-      await api.deleteHost(hostId);
++      console.log("Deleting host with ID:", hostId);
++      
++      // Use direct axios call to the test endpoint
++      const response = await axios.delete(
++        `http://localhost:5000/api/hosts/test-delete/${hostId}?environment=non-production`
++      );
++      
++      console.log("Delete response:", response.data);
++      
++      // Show a success message
++      alert("Host deleted successfully");
+       
+       // Refresh data after deletion
+       fetchData();

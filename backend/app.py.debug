@@ -1,0 +1,13 @@
+# Add this after the existing imports
+import traceback
+
+# And add this function before the API endpoints
+def log_request():
+    """Log detailed request information for debugging"""
+    logger.info(f"Received {request.method} request to {request.path}")
+    logger.info(f"Headers: {dict(request.headers)}")
+    if request.is_json:
+        logger.info(f"JSON data: {request.json}")
+    else:
+        logger.info(f"Form data: {request.form}")
+        logger.info(f"Query params: {request.args}")

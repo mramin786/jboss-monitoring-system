@@ -1,1 +1,90 @@
-[]
+[
+  {
+    "id": 1,
+    "hostname": "ftc-lbjbsapp211",
+    "instances": [
+      {
+        "name": "DEV_CAMS_01",
+        "port": 9990,
+        "id": 1
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "hostname": "ftc-lbjbsapp211",
+    "instances": [
+      {
+        "name": "DEV_CAMS_01",
+        "port": 9990,
+        "id": 2
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "hostname": "ftc-lbjbsapp211",
+    "instances": [
+      {
+        "name": "DEV_CAMS_02",
+        "port": 9990,
+        "id": 3
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "hostname": "ftc-lbjbsapp211",
+    "instances": [
+      {
+        "name": "DEV_CAMS_03",
+        "port": 9990,
+        "id": 4
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "hostname": "ftc-lbjbsapp211",
+    "instances": [
+      {
+        "name": "DEV_CAMS_01",
+        "port": 9990,
+        "id": 5
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "hostname": "127.0.0.1",
+    "instances": [
+      {
+        "name": "standalone",
+        "port": 9990,
+        "id": 6
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "hostname": "127.0.0.1",
+    "instances": [
+      {
+        "name": "standalone",
+        "port": 9990,
+        "id": 7
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "hostname": "127.0.0.1",
+    "instances": [
+      {
+        "name": "standalone",
+        "port": 9990,
+        "id": 8
+      }
+    ]
+  }
+]

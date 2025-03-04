@@ -1,0 +1,57 @@
+--- file_storage.py	2023-03-05 00:00:00
++++ file_storage.py.new	2023-03-05 00:00:00
+@@ -184,6 +184,17 @@
+         with self.lock:
+             hosts = self._read_data(environment)
+             
++            # Check for duplicate hostname and instance
++            hostname = host_data.get("hostname", "")
++            instances = host_data.get("instances", [])
++            
++            # Check if this exact host and instance combination already exists
++            for existing_host in hosts:
++                if existing_host.get("hostname") == hostname:
++                    for instance in instances:
++                        if any(i.get("name") == instance.get("name") and i.get("port") == instance.get("port") for i in existing_host.get("instances", [])):
++                            return existing_host  # Return the existing host instead of creating a duplicate
++            
+             # Generate a new ID
+             host_id = 1
+             if hosts:
+@@ -301,6 +312,18 @@
+             hosts = self._read_data(environment)
+             updated_hosts = []
+             
++            # Track which host/instance combinations we've already seen
++            seen_combinations = set()
++            
++            # First, build a set of existing host/instance combinations
++            for host in hosts:
++                hostname = host.get("hostname", "")
++                for instance in host.get("instances", []):
++                    combination = (
++                        hostname, 
++                        instance.get("port", 0), 
++                        instance.get("name", "")
++                    )
++                    seen_combinations.add(combination)
++            
+             for entry in bulk_data:
+                 # Parse entry (hostname port instance_name)
+                 logger.info(f"Processing bulk entry: {entry}")
+@@ -318,6 +341,16 @@
+                     
+                 instance_name = ' '.join(parts[2:])
+                 
++                # Check if this combination already exists
++                combination = (hostname, port, instance_name)
++                if combination in seen_combinations:
++                    logger.info(f"Skipping duplicate entry: {entry}")
++                    continue
++                
++                # Add to seen combinations to prevent duplicates within this batch
++                seen_combinations.add(combination)
++                
++                
+                 # Find if host already exists
+                 host = next((h for h in hosts if h.get("hostname") == hostname), None)

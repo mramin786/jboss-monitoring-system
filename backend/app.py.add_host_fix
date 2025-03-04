@@ -1,0 +1,33 @@
+@app.route('/api/hosts', methods=['POST'])
+@jwt_required()
+def add_host():
+    """Add a new host"""
+    log_request()
+    current_user = get_jwt_identity()
+    environment = current_user.get('environment', 'non-production')
+    
+    try:
+        if not request.is_json:
+            logger.error("Request is not JSON")
+            return jsonify({"error": "Missing JSON in request"}), 400
+        
+        host_data = request.json
+        logger.info(f"Received host data: {host_data}")
+        
+        host_data['environment'] = environment
+        
+        # Handle various formats
+        hostname = host_data.get('hostname', '')
+        logger.info(f"Hostname: {hostname}, type: {type(hostname)}")
+        
+        if not hostname:
+            logger.error("Missing hostname")
+            return jsonify({"error": "Hostname is required"}), 400
+            
+        # Create the host
+        host = file_storage.add_host(host_data)
+        return jsonify(host=host), 201
+    except Exception as e:
+        logger.error(f"Error adding host: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({"error": f"Failed to add host: {str(e)}"}), 500

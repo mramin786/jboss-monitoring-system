@@ -17,6 +17,9 @@ services:
       - PROD_PASSWORD=prod_password
       - NONPROD_USERNAME=nonprod_admin
       - NONPROD_PASSWORD=nonprod_password
+      - JBOSS_CLI_PATH=/app/jboss/bin/jboss-cli.sh
+      - JBOSS_USERNAME=jboss_user
+      - JBOSS_PASSWORD=jboss_password
       - STORAGE_DIR=/app/data
     ports:
       - "5000:5000"
@@ -34,16 +37,5 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - frontend
       - backend
     restart: unless-stopped

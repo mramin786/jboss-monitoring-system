@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Add Host</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        textarea { width: 100%; height: 100px; }
+        button { margin-top: 10px; padding: 5px 10px; }
+        #result { margin-top: 20px; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Add Host</h1>
+        
+        <h2>Single Host</h2>
+        <div>
+            <input type="text" id="hostname" placeholder="e.g., ftc-lbjbsapp211 9990 DEV_CAMS_01" style="width: 100%;">
+            <button onclick="testAddSingleHost()">Add Single Host</button>
+        </div>
+        
+        <h2>Bulk Add</h2>
+        <div>
+            <textarea id="bulkData" placeholder="ftc-lbjbsapp211 9990 DEV_CAMS_01
+ftc-lbjbsapp211 10090 DEV_ABC_01"></textarea>
+            <button onclick="testAddBulkHosts()">Add Bulk Hosts</button>
+        </div>
+        
+        <h2>Result</h2>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testAddSingleHost() {
+            const hostname = document.getElementById('hostname').value.trim();
+            if (!hostname) {
+                alert('Please enter a hostname');
+                return;
+            }
+            
+            try {
+                // Parse hostname port instance format
+                let payload = { hostname };
+                
+                if (hostname.includes(' ')) {
+                    const parts = hostname.split(/\s+/);
+                    if (parts.length >= 3) {
+                        const host = parts[0];
+                        const port = parseInt(parts[1], 10);
+                        const name = parts.slice(2).join('_');
+                        
+                        console.log(`Parsed: host=${host}, port=${port}, name=${name}`);
+                        payload = {
+                            hostname: host,
+                            instances: [{ name, port }]
+                        };
+                    }
+                }
+                
+                console.log('Sending payload:', payload);
+                document.getElementById('result').innerText = 'Sending: ' + JSON.stringify(payload, null, 2);
+                
+                const response = await fetch('http://localhost:5000/api/hosts/test-add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                console.log('Response:', data);
+                document.getElementById('result').innerText += '\n\nResponse: ' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerText += '\n\nError: ' + error.message;
+            }
+        }
+        
+        async function testAddBulkHosts() {
+            const bulkData = document.getElementById('bulkData').value.trim();
+            if (!bulkData) {
+                alert('Please enter bulk data');
+                return;
+            }
+            
+            try {
+                const lines = bulkData.split('\n').filter(line => line.trim() !== '');
+                console.log('Bulk lines:', lines);
+                
+                document.getElementById('result').innerText = 'Processing bulk hosts:\n' + lines.join('\n');
+                
+                // Process each line individually
+                for (const line of lines) {
+                    const parts = line.split(/\s+/);
+                    if (parts.length < 3) {
+                        document.getElementById('result').innerText += `\nSkipping invalid line: ${line}`;
+                        continue;
+                    }
+                    
+                    const host = parts[0];
+                    const port = parseInt(parts[1], 10);
+                    const name = parts.slice(2).join('_');
+                    
+                    const payload = {
+                        hostname: host,
+                        instances: [{ name, port }]
+                    };
+                    
+                    console.log('Sending payload:', payload);
+                    document.getElementById('result').innerText += '\n\nSending: ' + JSON.stringify(payload, null, 2);
+                    
+                    const response = await fetch('http://localhost:5000/api/hosts/test-add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const data = await response.json();
+                    console.log('Response:', data);
+                    document.getElementById('result').innerText += '\nResponse: ' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerText += '\n\nError: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

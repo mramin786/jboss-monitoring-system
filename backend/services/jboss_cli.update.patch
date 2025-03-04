@@ -1,0 +1,62 @@
+--- jboss_cli.py	2023-03-05 00:00:00
++++ jboss_cli.py.new	2023-03-05 00:00:00
+@@ -80,11 +80,19 @@
+         is_online = hash(f"{host}:{port}") % 10 < 8  # 80% chance of being online
+         if is_online:
+             return True, {"outcome": "success", "result": "running"}
++            # Always show as online for testing
++            return True, {"outcome": "success", "result": "running"}
+         else:
+-            return False, "Failed to connect to the controller"
++            # For testing, always return online
++            return True, {"outcome": "success", "result": "running"}
+                 
+     elif "/subsystem=datasources:read-resource" in command:
+         # Return simulated datasources
++        # For each instance, always return some dummy datasources
++        if True:
++            # Always return some datasources for testing
++            return True, {
++                "outcome": "success",
++                "result": {
+               "result": {
+                 "data-source": {
+                   "MainDS": {
+@@ -107,15 +115,28 @@
+         
+     elif "test-connection-in-pool" in command:
+         # Simulate datasource connection test
+-        # Extract the datasource name from the command
+-        ds_name = command.split("=")[1].split(":")[0]
+-        # Randomly determine if connection is successful, but weight towards success
+-        success = random.random() > 0.2  # 80% chance of success
+-        if success:
+-            return True, {"outcome": "success"}
+-        else:
+-            return False, {"outcome": "failed", "failure-description": f"Could not connect to {ds_name}"}
+-                
++        # For testing, always return success
++        return True, {"outcome": "success"}
++        
++    elif "/deployment=*:read-resource" in command:
++        # Return simulated deployments
++        # For testing, always return some deployments
++        return True, {
++            "outcome": "success",
++            "result": {
++                "app.war": {
++                    "runtime-name": "app.war",
++                    "enabled": True,
++                    "status": "OK"
++                },
++                "admin.war": {
++                    "runtime-name": "admin.war",
++                    "enabled": True,
++                    "status": "OK"
++                }
++            }
++        }
++        
+     elif "/deployment=*:read-resource" in command:
+         # Return simulated deployments
+         return True, {

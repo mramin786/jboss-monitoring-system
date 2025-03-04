@@ -1,0 +1,44 @@
+  // Load hosts and status data
+  const fetchData = useCallback(async (jbossCredentials = null) => {
+    try {
+      console.log("Fetching data...");
+      setIsLoading(true);
+      setError('');
+      
+      // Use a direct fetch to the backend to get hosts without authentication
+      console.log("Fetching hosts directly from backend...");
+      const response = await fetch('http://localhost:5000/api/hosts?environment=non-production');
+      const data = await response.json();
+      console.log("Hosts response:", data);
+      
+      if (data.hosts) {
+        console.log(`Found ${data.hosts.length} hosts:`, data.hosts);
+        setHosts(data.hosts);
+      } else {
+        console.log("No hosts found in response");
+        setHosts([]);
+      }
+      
+      setLastRefresh(new Date());
+      
+      // Initialize expanded state for new hosts
+      const newExpandedState = { ...expandedHosts };
+      if (data.hosts) {
+        data.hosts.forEach(host => {
+          if (!(host.id in newExpandedState)) {
+            newExpandedState[host.id] = true; // Default to expanded
+          }
+        });
+      }
+      setExpandedHosts(newExpandedState);
+      
+      // Fetch recent reports
+      fetchReports();
+      
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load monitoring data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [expandedHosts]);

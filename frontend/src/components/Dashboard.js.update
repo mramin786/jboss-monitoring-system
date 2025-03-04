@@ -1,0 +1,16 @@
+// Locate the handleAddHost function in Dashboard.js and update it to this:
+
+// Handle adding a host
+const handleAddHost = async (hostname, bulkLines) => {
+  try {
+    console.log("handleAddHost called", { hostname, bulkLines });
+    
+    // Force a data refresh regardless of what was added
+    fetchData();
+    
+    return true;
+  } catch (err) {
+    console.error("Error in handleAddHost:", err);
+    throw err;
+  }
+};

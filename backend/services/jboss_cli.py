@@ -2,8 +2,10 @@
 import subprocess
 import json
 import logging
-import re
+import os
+import random
 from typing import Dict, List, Any, Tuple, Optional
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +13,19 @@ class JBossCLIService:
     """Service to execute JBoss CLI commands and parse results"""
     
     def __init__(self):
-        self.cli_path = "/path/to/jboss-cli.sh"  # Update this with your actual JBoss CLI path
+        # Default CLI path - update this with the actual path for your environment
+        self.cli_path = os.environ.get("JBOSS_CLI_PATH", "/app/jboss/bin/jboss-cli.sh")
+        
+        # Check if CLI exists
+        self.mock_mode = not os.path.isfile(self.cli_path)
+        if self.mock_mode:
+            logger.warning(f"JBoss CLI not found at {self.cli_path}, running in mock mode!")
+        else:
+            logger.info(f"Using JBoss CLI at: {self.cli_path}")
+            
+        # Default credentials (can be overridden during API calls)
+        self.default_username = os.environ.get("JBOSS_USERNAME")
+        self.default_password = os.environ.get("JBOSS_PASSWORD")
     
     def execute_command(self, host: str, port: int, command: str, 
                         username: Optional[str] = None, 
@@ -29,18 +43,32 @@ class JBossCLIService:
         Returns:
             Tuple containing success status and command result
         """
+        # If in mock mode, return simulated data
+        if self.mock_mode:
+            return self._mock_execute_command(host, port, command)
+        
+        # Use provided credentials or fall back to defaults
+        username = username or self.default_username
+        password = password or self.default_password
+        
         try:
             # Build the CLI command
             cli_command = [
                 self.cli_path,
-                "--controller=" + host + ":" + str(port),
-                "--command=" + command
+                "-c",  # Connect mode
+                f"--controller={host}:{port}",
+                f"--command={command}"
             ]
             
             # Add credentials if provided
             if username and password:
-                cli_command.append("--user=" + username)
-                cli_command.append("--password=" + password)
+                cli_command.extend([
+                    f"--user={username}",
+                    f"--password={password}"
+                ])
+            
+            logger.info(f"Executing command on {host}:{port}")
+            logger.debug(f"Command: {' '.join(cli_command)}")
             
             # Execute the command
             process = subprocess.Popen(
@@ -67,6 +95,95 @@ class JBossCLIService:
         except Exception as e:
             logger.exception(f"Exception executing JBoss CLI command: {str(e)}")
             return False, str(e)
+    
+    def _mock_execute_command(self, host: str, port: int, command: str) -> Tuple[bool, Any]:
+        """
+        Simulate JBoss CLI command execution for mock mode
+        
+        Args:
+            host: The hostname or IP address
+            port: The management port number
+            command: The CLI command to execute
+            
+        Returns:
+            Tuple containing success status and simulated result
+        """
+        logger.info(f"MOCK MODE: Simulating command '{command}' on {host}:{port}")
+        
+        # Handle different command types
+        if command == ":read-attribute(name=server-state)":
+            # Based on host and port, randomly determine if server is online
+            # Use a hash of the host+port to ensure consistent results
+            is_online = hash(f"{host}:{port}") % 10 < 8  # 80% chance of being online
+            if is_online:
+                return True, {"outcome": "success", "result": "running"}
+            else:
+                return False, "Failed to connect to the controller"
+                
+        elif "/subsystem=datasources:read-resource" in command:
+            # Return simulated datasources
+            return True, {
+                "outcome": "success",
+                "result": {
+                    "data-source": {
+                        "MainDS": {
+                            "jndi-name": "java:jboss/datasources/MainDS",
+                            "driver-name": "mysql",
+                            "enabled": True,
+                        },
+                        "ReportingDS": {
+                            "jndi-name": "java:jboss/datasources/ReportingDS",
+                            "driver-name": "oracle",
+                            "enabled": True,
+                        }
+                    },
+                    "xa-data-source": {
+                        "TransactionDS": {
+                            "jndi-name": "java:jboss/datasources/TransactionDS",
+                            "driver-name": "postgresql",
+                            "enabled": True,
+                        }
+                    }
+                }
+            }
+            
+        elif "test-connection-in-pool" in command:
+            # Simulate datasource connection test
+            # Extract the datasource name from the command
+            ds_name = command.split("=")[1].split(":")[0]
+            # Randomly determine if connection is successful, but weight towards success
+            success = random.random() > 0.2  # 80% chance of success
+            if success:
+                return True, {"outcome": "success"}
+            else:
+                return False, {"outcome": "failed", "failure-description": f"Could not connect to {ds_name}"}
+                
+        elif "/deployment=*:read-resource" in command:
+            # Return simulated deployments
+            return True, {
+                "outcome": "success",
+                "result": {
+                    "app.war": {
+                        "runtime-name": "app.war",
+                        "enabled": True,
+                        "status": "OK"
+                    },
+                    "admin.war": {
+                        "runtime-name": "admin.war",
+                        "enabled": True,
+                        "status": "OK"
+                    },
+                    "api.war": {
+                        "runtime-name": "api.war",
+                        "enabled": random.choice([True, False]),
+                        "status": random.choice(["OK", "FAILED"])
+                    }
+                }
+            }
+            
+        else:
+            # Default response for unknown commands
+            return True, {"outcome": "success", "result": "Command executed in mock mode"}
     
     def check_instance_status(self, host: str, port: int, 
                              username: Optional[str] = None, 

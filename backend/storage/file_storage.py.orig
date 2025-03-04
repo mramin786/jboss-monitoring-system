@@ -49,7 +49,6 @@ class FileStorage:
         """Read data from the appropriate JSON file"""
         file_path = self._get_file_path(environment)
         try:
-            logger.info(f"Reading data from {file_path}")
             with open(file_path, "r") as f:
                 return json.load(f)
         except Exception as e:
@@ -61,7 +60,6 @@ class FileStorage:
         file_path = self._get_file_path(environment)
         try:
             with open(file_path, "w") as f:
-                logger.info(f"Writing {len(data)} hosts to {file_path}")
                 json.dump(data, f, indent=2)
             return True
         except Exception as e:

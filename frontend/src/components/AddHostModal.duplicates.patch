@@ -1,0 +1,68 @@
+--- AddHostModal.js	2023-03-05 00:00:00
++++ AddHostModal.js.new	2023-03-05 00:00:00
+@@ -23,6 +23,32 @@
+         // Parse the hostname if it contains spaces
+         let payload = { hostname };
+         
++        // Check for duplicates first
++        let isDuplicate = false;
++        
++        if (hostname.includes(' ')) {
++          const parts = hostname.split(/\s+/);
++          if (parts.length >= 3) {
++            const host = parts[0];
++            const port = parseInt(parts[1], 10);
++            const name = parts.slice(2).join('_');
++            
++            // Check if this combination exists
++            try {
++              const checkResponse = await axios.post('http://localhost:5000/api/hosts/test-check-duplicate', {
++                hostname: host,
++                port: port,
++                instance_name: name,
++                environment: 'non-production'
++              });
++              
++              if (checkResponse.data.duplicate) {
++                setError(`Duplicate entry: ${hostname}. This host and instance already exists.`);
++                setIsProcessing(false);
++                return;
++              }
++            } catch (checkErr) {
++              console.warn("Error checking for duplicates:", checkErr);
++            }
++          }
++        }
++        
+         if (hostname.includes(' ')) {
+           const parts = hostname.split(/\s+/);
+           if (parts.length >= 3) {
+@@ 59,6 +85,27 @@
+           const parts = line.split(/\s+/);
+           if (parts.length < 3) {
+             console.warn(`Skipping invalid line: ${line}`);
++            continue;
++          }
++          
++          const host = parts[0];
++          const port = parseInt(parts[1], 10);
++          const name = parts.slice(2).join('_');
++          
++          // Check if this combination exists
++          try {
++            const checkResponse = await axios.post('http://localhost:5000/api/hosts/test-check-duplicate', {
++              hostname: host,
++              port: port,
++              instance_name: name,
++              environment: 'non-production'
++            });
++            
++            if (checkResponse.data.duplicate) {
++              console.warn(`Skipping duplicate entry: ${line}. This host and instance already exists.`);
++              continue;
++            }
++          } catch (checkErr) {
++            console.warn("Error checking for duplicates:", checkErr);
+           }
+           
+           const host = parts[0];
